@@ -296,7 +296,7 @@ def NeedToChangeDir():
 def PrintScreen():
 
 	global Score
-	print("\n\n\n\n\n\n\n\n")
+	print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
 	print(screen)
 	
 	
