@@ -237,7 +237,7 @@ listener = keyboard.Listener(on_press = on_press)
 listener.start()
 
 globalCounter = 0
-delay = 10
+delay = 20
 
 
 horzDirection = 1
@@ -266,6 +266,7 @@ def Main():
 
 
 		PrintScreen()
+		print("Score: " + str(Score))
 
 		if not screen.Objects.__contains__(player):
 			break
@@ -296,7 +297,6 @@ def PrintScreen():
 
 	global Score
 	print("\n\n\n\n\n\n\n\n")
-	print("Score: " + str(Score))
 	print(screen)
 	
 	
