@@ -16,9 +16,7 @@ class Vector:
         self.y = posY
 
     def __add__(self, other):
-        self.x+=other.x
-        self.y+=other.y
-        return self
+        return Vector(self.x+other.x, self.y+other.y)
 
     def __eq__(self, other):
 
@@ -28,6 +26,8 @@ class Vector:
 class GameObject:
 
     symbol = '?'
+    color = (255, 255, 255)
+    bg_color = (0, 0, 0)
     position = Vector(0, 0)
 
     def __init__(self):
@@ -42,8 +42,11 @@ class GameObject:
         newPos = self.position + dir
         if newPos.x < 0 or newPos.x > WINDOW_SIZE-1 or newPos.y < 0 or newPos.y > WINDOW_SIZE - 1:
             return
-        self.position = newPos
+        else:
+            self.position = newPos
 
+    def draw(self, console):
+        console.draw_char(self.position.x, self.position.y, self.symbol, bg=self.bg_color, fg=self.color)
 
 class Player(GameObject):
 
@@ -107,14 +110,21 @@ def Main():
 
     tdl.setFPS(LIMIT_FPS)
 
+    objects = []
+
     player = Player()
-    screen.add_game_object(player)
+    objects.append(player)
+
 
     while not tdl.event.is_window_closed():
 
-        screen.draw(console)
+        console.clear()
+        for obj in objects:
+            obj.draw(console)
         tdl.flush()
-        screen.logic()
+
+        for obj in objects:
+            obj.logic()
 
         keypress = False
         for event in tdl.event.get():
