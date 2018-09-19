@@ -1,4 +1,5 @@
 import tdl
+import random as rnd
 
 WINDOW_SIZE = 50
 
@@ -21,6 +22,25 @@ class Vector:
     def __eq__(self, other):
 
         return self.x == other.x and self.y == other.y
+
+
+class Stat:
+
+    cur=0
+    max=0
+
+    def __init__(self, amount):
+        self.cur = amount
+        self.max = amount
+
+    def __add__(self, amount):
+        tmp = Stat(self.max)
+        tmp.cur = self.cur+amount
+        if tmp.cur > tmp.max:
+            tmp.cur = tmp.max
+        if tmp.cur < 0:
+            tmp.cur = 0
+        return tmp
 
 
 class GameObject:
@@ -48,7 +68,19 @@ class GameObject:
     def draw(self, console):
         console.draw_char(self.position.x, self.position.y, self.symbol, bg=self.bg_color, fg=self.color)
 
-class Player(GameObject):
+    def interact(self, other):
+        a=0
+
+    def can_move_through(self):
+        return True
+
+
+class Creature(GameObject):
+
+    hp = Stat(10)
+
+
+class Player(Creature):
 
     def __init__(self):
         self.symbol = "@"
@@ -64,6 +96,22 @@ class Player(GameObject):
             self.move_to_dir(Vector(1, 0))
         elif user_input.key == "LEFT":
             self.move_to_dir(Vector(-1, 0))
+
+
+class PhysicalObject(GameObject):
+
+    hp = Stat(0)
+
+    def __init__(self, symbol, hp):
+        self.symbol = symbol
+        self.hp = Stat(hp)
+
+    def interact(self, other):
+        return
+
+    def can_move_through(self):
+        return False
+
 
 
 class MainScreen:
@@ -95,48 +143,62 @@ class MainScreen:
     def add_game_object(self, obj):
         self.objects.append(obj)
 
+class Game1:
 
-def Main():
-
-    screen = MainScreen()
+    console = None
+    info_console = None
+    objects = []
+    player = None
 
     SCREEN_WIDTH = 80
     SCREEN_HEIGHT = 50
     LIMIT_FPS = 20
 
-    tdl.set_font('arial10x10.png', greyscale=True, altLayout=True)
+    def __init__(self):
+        tdl.set_font('arial10x10.png', greyscale=True, altLayout=True)
+        self.console = tdl.init(self.SCREEN_WIDTH, self.SCREEN_HEIGHT, title="zz", fullscreen=False)
+        tdl.setFPS(self.LIMIT_FPS)
+        self.objects = []
+        self.player = Player()
+        self.objects.append(self.player)
 
-    console = tdl.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Zombie", fullscreen=False)
-
-    tdl.setFPS(LIMIT_FPS)
-
-    objects = []
-
-    player = Player()
-    objects.append(player)
-
-
-    while not tdl.event.is_window_closed():
-
-        console.clear()
-        for obj in objects:
-            obj.draw(console)
+    def draw(self):
+        self.console.clear()
+        for obj in self.objects:
+            obj.draw(self.console)
         tdl.flush()
 
-        for obj in objects:
+    def logic(self):
+        for obj in self.objects:
             obj.logic()
 
+    def input(self):
         keypress = False
         for event in tdl.event.get():
             if event.type == 'KEYDOWN':
                 user_input = event
                 keypress = True
         if not keypress:
-            continue
-        player.input(user_input)
+            return
+        self.player.input(user_input)
+
+    def generate_level(self):
+        type = rnd.randint(0, 5)
+        if type == 0:
+
+
+class Generator:
+
+    def generate_house(self):
 
 
 
 
+def Main():
+    game = Game1()
+    while not tdl.event.is_window_closed():
+        game.draw()
+        game.logic()
+        game.input()
 
 Main()
