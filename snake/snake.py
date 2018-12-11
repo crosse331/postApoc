@@ -18,16 +18,22 @@ class Snake:
         self.listener = keyboard.Listener(on_press=self.on_press)
         self.listener.start()
         self.grow = False
+        self.hunger = 500
 
     def on_press(self, key):
         # keyboard.Key
-        if key.char == 'w' and self.moving_vector != (0,1):
+        char = ''
+        try:
+            char = key.char
+        except AttributeError:
+            char = key
+        if char == 'w' and self.moving_vector != (0,1):
             self.moving_vector = (0, -1)
-        elif key.char == 's' and self.moving_vector != (0,-1):
+        elif char == 's' and self.moving_vector != (0,-1):
             self.moving_vector = (0, 1)
-        elif key.char == 'a' and self.moving_vector != (1,0):
+        elif char == 'a' and self.moving_vector != (1,0):
             self.moving_vector = (-1, 0)
-        elif key.char == 'd' and self.moving_vector != (-1,0):
+        elif char == 'd' and self.moving_vector != (-1,0):
             self.moving_vector = (1, 0)
 
 
@@ -38,6 +44,10 @@ class Snake:
 
     def logic(self):
         global game_over, apple_pos
+        self.hunger -= 1
+        if self.hunger <= 0:
+            game_over = True
+            return
         self.body.insert(0, (self.body[0][0] + self.moving_vector[0], self.body[0][1] + self.moving_vector[1]))
         if self.body[0][0] < 0 or self.body[0][0] > SCREEN_SIZE[0]-1 or self.body[0][1] < 0 or self.body[0][1] > SCREEN_SIZE[1]-1:
             game_over = True
@@ -49,10 +59,11 @@ class Snake:
             del self.body[-1]
         else:
             apple_pos = (rnd.randint(1,SCREEN_SIZE[0]-1), rnd.randint(1,SCREEN_SIZE[1]-1))
+            self.hunger = 500
 
     def set_controlls(self, controlls):
-        vectors = [(0,-1),(0,1),(-1,0),(1,0)]
-        self.moving_vector = vectors[controlls.index(max(controlls))]
+        vectors = ['w','s','a','d']
+        self.on_press(vectors[controlls.index(max(controlls))])
 
     def get_inputs(self):
         global apple_pos
@@ -110,7 +121,7 @@ class Snake:
 tdl.set_font('arial10x10.png', greyscale=True, altLayout=True)
 console = tdl.init(SCREEN_SIZE[0], SCREEN_SIZE[1], title="Snake", fullscreen=False)
 tdl.set_fps(LIMIT_FPS)
-count_of_best = 0
+count = 0
 
 while True:
     snake = Snake()
@@ -123,7 +134,8 @@ while True:
         network.mutate()
     while not tdl.event.is_window_closed():
         if game_over:
-            print("Game Over!")
+            print("Game Over! " + str(count))
+            count += 1
             print("Your score: " + str(len(snake.body) - 1))
             game_over = False
             if len(snake.body) > 1:
