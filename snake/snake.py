@@ -3,10 +3,12 @@ import time
 import random as rnd
 import tdl
 
-SCREEN_SIZE = (64,64)
-LIMIT_FPS = 20
+import nn as NeuralNetworks
+
+SCREEN_SIZE = (32,32)
+LIMIT_FPS = 60
 game_over = False
-apple_pos = (1,1)
+apple_pos = (14,14)
 
 class Snake:
     def __init__(self):
@@ -37,7 +39,7 @@ class Snake:
     def logic(self):
         global game_over, apple_pos
         self.body.insert(0, (self.body[0][0] + self.moving_vector[0], self.body[0][1] + self.moving_vector[1]))
-        if self.body[0][0] < 0 or self.body[0][0] > SCREEN_SIZE[0] or self.body[0][1] < 0 or self.body[0][1] > SCREEN_SIZE[1]:
+        if self.body[0][0] < 0 or self.body[0][0] > SCREEN_SIZE[0]-1 or self.body[0][1] < 0 or self.body[0][1] > SCREEN_SIZE[1]-1:
             game_over = True
         for c in self.body[1:-1]:
             if c == self.body[0]:
@@ -48,21 +50,91 @@ class Snake:
         else:
             apple_pos = (rnd.randint(1,SCREEN_SIZE[0]-1), rnd.randint(1,SCREEN_SIZE[1]-1))
 
+    def set_controlls(self, controlls):
+        vectors = [(0,-1),(0,1),(-1,0),(1,0)]
+        self.moving_vector = vectors[controlls.index(max(controlls))]
+
+    def get_inputs(self):
+        global apple_pos
+        vectors = [(1,0),(-1,0),(0,1),(0,-1),(1,1),(1,-1),(-1,1),(-1,-1)]
+        result = []
+        #Apple distance
+        for v in vectors:
+            tmp = self.body[0]
+            distance = 0
+            success = False
+            while True:
+                distance += 1
+                tmp = (tmp[0] + v[0], tmp[1] + v[1])
+                if tmp[0] == apple_pos[0] and tmp[1] == apple_pos[1]:
+                    success = True
+                    break
+                if tmp[0] < 0 or tmp[0] > 63 or tmp[1] < 0 or tmp[1] > 63:
+                    break
+            if success:
+                result.append(distance)
+            else:
+                result.append(0)
+        #Self body distance
+        for v in vectors:
+            tmp = self.body[0]
+            distance = 0
+            success = False
+            while True:
+                distance += 1
+                tmp = (tmp[0] + v[0], tmp[1] + v[1])
+                for b in self.body:
+                    if b[0] == tmp[0] and b[1] == tmp[1]:
+                        success = True
+                if tmp[0] < 0 or tmp[0] > 63 or tmp[1] < 0 or tmp[1] > 63:
+                    break
+            if success:
+                result.append(distance)
+            else:
+                result.append(0)
+        #Borders distance
+        for v in vectors:
+            tmp = self.body[0]
+            distance = 0
+            while True:
+                distance+=1
+                tmp = (tmp[0] + v[0], tmp[1] + v[1])
+                if tmp[0] < 0 or tmp[0] > 63 or tmp[1] < 0 or tmp[1] > 63:
+                    break
+            result.append(distance)
+
+        return result
+
+
 
 tdl.set_font('arial10x10.png', greyscale=True, altLayout=True)
 console = tdl.init(SCREEN_SIZE[0], SCREEN_SIZE[1], title="Snake", fullscreen=False)
 tdl.set_fps(LIMIT_FPS)
-snake = Snake()
+count_of_best = 0
 
-
-
-while not tdl.event.is_window_closed():
-    if game_over:
-        print("Game Over!")
-        print("Your score: " + str(len(snake.body) - 1))
-        break
-    console.clear()
-    snake.logic()
-    snake.draw(console)
-    console.draw_char(apple_pos[0], apple_pos[1], '@', fg=(255,0,0))
-    tdl.flush()
+while True:
+    snake = Snake()
+    best = None
+    best_size = 0
+    if best is None:
+        network = NeuralNetworks.NeuralNetwork([24,16,4])
+    else:
+        network =
+    while not tdl.event.is_window_closed():
+        if game_over:
+            print("Game Over!")
+            print("Your score: " + str(len(snake.body) - 1))
+            game_over = False
+            if len(snake.body) > 1:
+                if best_size < len(snake.body):
+                    best = network
+                    best_size = len(snake.body)
+                    network.save()
+            break
+        console.clear()
+        res = network.input(snake.get_inputs())
+        snake.set_controlls(res)
+        snake.logic()
+        snake.draw(console)
+        console.draw_char(apple_pos[0], apple_pos[1], '@', fg=(255,0,0))
+        tdl.flush()
