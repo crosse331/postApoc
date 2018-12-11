@@ -119,7 +119,8 @@ while True:
     if best is None:
         network = NeuralNetworks.NeuralNetwork([24,16,4])
     else:
-        network =
+        network = best.copy()
+        network.mutate()
     while not tdl.event.is_window_closed():
         if game_over:
             print("Game Over!")

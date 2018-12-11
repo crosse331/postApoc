@@ -102,6 +102,15 @@ class NeuralNetwork:
         size = []
         for l in self.layers:
             size.append(len(l.neurons))
+
+        result = NeuralNetwork(size)
+        for l in range(len(self.layers)):
+            for n in range(len(self.layers[l].neurons)):
+                for w in range(len(self.layers[l].neurons[n].weights)):
+                    result.layers[l].neurons[n].weights[w] = self.layers[l].neurons[n].weights[w]
+
+        return result
+
             
 
 
