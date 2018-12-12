@@ -2,6 +2,7 @@ from pynput import keyboard
 import time
 import random as rnd
 import tdl
+import math
 
 import nn as NeuralNetworks
 
@@ -15,8 +16,8 @@ class Snake:
         self.position = (int(SCREEN_SIZE[0]/2), int(SCREEN_SIZE[1]/2))
         self.moving_vector = (0,1)
         self.body = [self.position]
-        self.listener = keyboard.Listener(on_press=self.on_press)
-        self.listener.start()
+        #self.listener = keyboard.Listener(on_press=self.on_press)
+        #self.listener.start()
         self.grow = False
         self.hunger = 500
         self.live = 0
@@ -82,12 +83,13 @@ class Snake:
                 if tmp[0] == apple_pos[0] and tmp[1] == apple_pos[1]:
                     success = True
                     break
-                if tmp[0] < 0 or tmp[0] > 63 or tmp[1] < 0 or tmp[1] > 63:
+                if tmp[0] < 0 or tmp[0] > SCREEN_SIZE[0] - 1 or tmp[1] < 0 or tmp[1] > SCREEN_SIZE[1] - 1:
                     break
             if success:
                 result.append(distance)
             else:
                 result.append(0)
+
         #Borders and self body distance
         for v in vectors:
             tmp = self.body[0]
@@ -100,7 +102,7 @@ class Snake:
                     if b[0] == tmp[0] and b[1] == tmp[1]:
                         success = True
                         break
-                if tmp[0] < 0 or tmp[0] > 63 or tmp[1] < 0 or tmp[1] > 63:
+                if tmp[0] < 0 or tmp[0] > SCREEN_SIZE[0] - 1 or tmp[1] < 0 or tmp[1] > SCREEN_SIZE[1] - 1:
                     break
                 if success:
                     break
@@ -109,7 +111,11 @@ class Snake:
         return result
 
     def get_score(self):
-        return (len(self.body) - 1) * 1000 + self.live
+        global apple_pos
+        score = (len(self.body) - 1) ** 2 * 10 + self.live # - math.sqrt((self.body[0][0] - apple_pos[0]) ** 2 + (self.body[0][1] - apple_pos[1]) ** 2)
+        if self.hunger == 0:
+            score -= 400
+        return score
 
 
 def nn_sort_func(creature):
@@ -122,11 +128,17 @@ generation_number = 0
 count = 0
 
 generation = []
-generation_size = 20
+generation_size = 200
+nn_sizes = [16,8,4]
 snake = Snake()
 
+best_score = 0
+equal_best = 0
+
 for _ in range(generation_size):
-    generation.append(NeuralNetworks.NeuralNetwork([16, 4]))
+    generation.append(NeuralNetworks.NeuralNetwork(nn_sizes))
+
+#generation[0].mutate()
 
 while True:
     count = 0
@@ -149,20 +161,37 @@ while True:
             tdl.flush()
 
     generation_number += 1
-    generation.sort(key=nn_sort_func)
-    best = generation[0:2]
+    generation.sort(key=nn_sort_func,reverse=True)
+
+    best = generation[0:10]
+    best[0].save()
+    #if best_score == best[0].score:
+    #    equal_best += 1
+    #    if equal_best>3:
+    #        best = generation[100:110]
+    #        best_score = 0
+    #        equal_best = 0
+    #else:
+    #    best_score = best[0]
+    #    equal_best = 0
     generation.clear()
-    generation.append(best[0])
-    generation.append(best[1])
+    for b in best:
+        generation.append(b)
+
+    for _ in range(generation_size):
+        generation.append(best[0].copy())
+        generation[len(generation) - 1].mutate()
+
+
     #generate new generation by best creature + 8 of they children + 5 mutants of each of them
     #and 5 new creatures
-    for _ in range(8):
-        generation.append(best[0].copy())
-        generation[len(generation) - 1].populate(best[1])
-    for _ in range(5):
-        generation.append(best[0].copy())
-        generation[len(generation) - 1].mutate()
-        generation.append(best[1].copy())
-        generation[len(generation) - 1].mutate()
-    for _ in range(5):
-        generation.append(NeuralNetworks.NeuralNetwork([16,4]))
+    #for _ in range(int(0.4 * generation_size)):
+    #    generation.append(best[0].copy())
+    #    generation[len(generation) - 1].populate(best[1])
+    #for _ in range(int(0.25 * generation_size)):
+    #    generation.append(best[0].copy())
+    #    generation[len(generation) - 1].mutate()
+    #    generation.append(best[1].copy())
+    #    generation[len(generation) - 1].mutate()
+    #for _ in range(int(0.25 * generation_size)):
+    #    generation.append(NeuralNetworks.NeuralNetwork(nn_sizes))

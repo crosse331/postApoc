@@ -16,7 +16,7 @@ class Neuron:
 
     def add_next_neuron(self, neuron):
         self.next.append(neuron)
-        self.weights.append(rnd.uniform(-1.1, 1.1))
+        self.weights.append(rnd.uniform(-5, 5))
 
     def add(self, signal):
         self.sum += signal
@@ -74,6 +74,10 @@ class NeuralNetwork:
         self.score = 0
 
     def input(self, inputs):
+        for l in self.layers:
+            for n in l.neurons:
+                n.sum = 0
+
         self.layers[0].input(inputs)
 
         result = []
@@ -97,8 +101,8 @@ class NeuralNetwork:
     def mutate(self):
         for l in self.layers:
             for n in l.neurons:
-                for w in n.weights:
-                    w += rnd.uniform(-0.1, 0.1)
+                for w in range(len(n.weights)):
+                    n.weights[w] += rnd.uniform(-1, 1)
 
     def populate(self, other):
         for l in range(len(self.layers)):
