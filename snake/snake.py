@@ -19,6 +19,7 @@ class Snake:
         self.listener.start()
         self.grow = False
         self.hunger = 500
+        self.live = 0
 
     def on_press(self, key):
         # keyboard.Key
@@ -45,6 +46,7 @@ class Snake:
     def logic(self):
         global game_over, apple_pos
         self.hunger -= 1
+        self.live += 1
         if self.hunger <= 0:
             game_over = True
             return
@@ -86,68 +88,81 @@ class Snake:
                 result.append(distance)
             else:
                 result.append(0)
-        #Self body distance
+        #Borders and self body distance
         for v in vectors:
             tmp = self.body[0]
             distance = 0
             success = False
             while True:
-                distance += 1
+                distance+=1
                 tmp = (tmp[0] + v[0], tmp[1] + v[1])
                 for b in self.body:
                     if b[0] == tmp[0] and b[1] == tmp[1]:
                         success = True
+                        break
                 if tmp[0] < 0 or tmp[0] > 63 or tmp[1] < 0 or tmp[1] > 63:
                     break
-            if success:
-                result.append(distance)
-            else:
-                result.append(0)
-        #Borders distance
-        for v in vectors:
-            tmp = self.body[0]
-            distance = 0
-            while True:
-                distance+=1
-                tmp = (tmp[0] + v[0], tmp[1] + v[1])
-                if tmp[0] < 0 or tmp[0] > 63 or tmp[1] < 0 or tmp[1] > 63:
+                if success:
                     break
             result.append(distance)
 
         return result
 
+    def get_score(self):
+        return (len(self.body) - 1) * 1000 + self.live
 
+
+def nn_sort_func(creature):
+    return creature.score
 
 tdl.set_font('arial10x10.png', greyscale=True, altLayout=True)
 console = tdl.init(SCREEN_SIZE[0], SCREEN_SIZE[1], title="Snake", fullscreen=False)
 tdl.set_fps(LIMIT_FPS)
+generation_number = 0
 count = 0
 
+generation = []
+generation_size = 20
+snake = Snake()
+
+for _ in range(generation_size):
+    generation.append(NeuralNetworks.NeuralNetwork([16, 4]))
+
 while True:
-    snake = Snake()
-    best = None
-    best_size = 0
-    if best is None:
-        network = NeuralNetworks.NeuralNetwork([24,16,4])
-    else:
-        network = best.copy()
-        network.mutate()
-    while not tdl.event.is_window_closed():
-        if game_over:
-            print("Game Over! " + str(count))
-            count += 1
-            print("Your score: " + str(len(snake.body) - 1))
-            game_over = False
-            if len(snake.body) > 1:
-                if best_size < len(snake.body):
-                    best = network
-                    best_size = len(snake.body)
-                    network.save()
-            break
-        console.clear()
-        res = network.input(snake.get_inputs())
-        snake.set_controlls(res)
-        snake.logic()
-        snake.draw(console)
-        console.draw_char(apple_pos[0], apple_pos[1], '@', fg=(255,0,0))
-        tdl.flush()
+    count = 0
+    for creature in generation:
+        while not tdl.event.is_window_closed():
+            if game_over:
+                print("Game Over! Generation: {0}, Creature: {1}".format(generation_number, count))
+                print("Score: " + str(snake.get_score()))
+                creature.score = snake.get_score()
+                game_over = False
+                count+=1
+                snake = Snake()
+                break
+            console.clear()
+            res = creature.input(snake.get_inputs())
+            snake.set_controlls(res)
+            snake.logic()
+            snake.draw(console)
+            console.draw_char(apple_pos[0], apple_pos[1], '@', fg=(255,0,0))
+            tdl.flush()
+
+    generation_number += 1
+    generation.sort(key=nn_sort_func)
+    best = generation[0:2]
+    generation.clear()
+    generation.append(best[0])
+    generation.append(best[1])
+    #generate new generation by best creature + 8 of they children + 5 mutants of each of them
+    #and 5 new creatures
+    for _ in range(8):
+        generation.append(best[0].copy())
+        generation[len(generation) - 1].populate(best[1])
+    for _ in range(5):
+        generation.append(best[0].copy())
+        generation[len(generation) - 1].mutate()
+        generation.append(best[1].copy())
+        generation[len(generation) - 1].mutate()
+    for _ in range(5):
+        generation.append(NeuralNetworks.NeuralNetwork([16,4]))

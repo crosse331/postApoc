@@ -3,6 +3,7 @@ import random as rnd
 
 count_of_best = 0
 
+
 class Neuron:
     def __init__(self):
         self.sum = 0
@@ -70,6 +71,7 @@ class NeuralNetwork:
                 self.layers.append(Layer(sizes[i], self.layers[i-1]))
             else:
                 self.layers.append(Layer(sizes[i], None))
+        self.score = 0
 
     def input(self, inputs):
         self.layers[0].input(inputs)
@@ -96,7 +98,14 @@ class NeuralNetwork:
         for l in self.layers:
             for n in l.neurons:
                 for w in n.weights:
-                    w += rnd.uniform(-0.01, 0.01)
+                    w += rnd.uniform(-0.1, 0.1)
+
+    def populate(self, other):
+        for l in range(len(self.layers)):
+            for n in range(len(self.layers[l].neurons)):
+                for w in range(len(self.layers[l].neurons[n].weights)):
+                    if rnd.randint(0,2) == 0:
+                        self.layers[l].neurons[n].weights[w] = other.layers[l].neurons[n].weights[w]
 
     def copy(self):
         size = []
