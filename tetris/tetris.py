@@ -96,8 +96,8 @@ def try_to_move():
 def try_to_move_horz(pos):
     global cur_fig, field
 
-    for i in range(pos[1] + len(cur_fig)):
-        for j in range(pos[0] + len(cur_fig[0])):
+    for i in range(pos[1], pos[1] + len(cur_fig), 1):
+        for j in range(pos[0], pos[0] + len(cur_fig[0]), 1):
             if field[i][j] != 0:
                 return False
     return True
