@@ -11,6 +11,10 @@ class Stat:
             self.cur = 0
         return self
 
+    def __sub__(self, other):
+        self.__add__(-other)
+        return self
+
     def get_percent(self):
         return self.cur/self.max
 
@@ -33,7 +37,13 @@ class Vector:
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y
 
-    def copyFrom(self, other):
+    def __mul__(self, other):
+        tmp = Vector(self.x, self.y)
+        tmp.x *= other
+        tmp.y *= other
+        return tmp
+
+    def copy_from(self, other):
         self.x = other.x
         self.y = other.y
 

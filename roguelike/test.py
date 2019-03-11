@@ -13,6 +13,9 @@ tdl.set_fps(LIMIT_FPS)
 
 room = gameplay.RoomController(logic.Vector(3,3),logic.Vector(15,15))
 player = objects.Player("@", (255,255,255), logic.Vector(8,8), room, 10)
+
+en = objects.Enemy("E", (255,0,0), logic.Vector(1,1), room, 5)
+
 for i in range(7):
     #it = It.Item("test" + str(i), 65 + i)
     it = It.get_random_item(i)

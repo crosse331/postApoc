@@ -21,6 +21,9 @@ class Object:
     def get_screen_pos(self):
         return self.position + self.room.position
 
+    def interact(self, obj):
+        return
+
 
 class ItemObject(Object):
     def __init__(self, item, pos, room):
@@ -31,8 +34,10 @@ class ItemObject(Object):
 class Creature(Object):
     def __init__(self, c, color, pos, room, hp):
         Object.__init__(self, c, color, pos, room, True)
-        self.hp = logic.Stat(hp)
-        self.inventory = gameplay.Inventory(16, self)
+        #self.hp = logic.Stat(hp)
+        self.stats = gameplay.CreatureStats(hp)
+        self.inventory = gameplay.Inventory(16, self, self.stats)
+        self.creature_type = 1
 
     def try_to_search(self):
         result = self.room.try_to_search(self.position)
@@ -48,6 +53,18 @@ class Creature(Object):
     def drop_item(self, item):
         ItemObject(item, self.position, self.room)
 
+    def try_to_move(self, vector):
+        if self.room.try_to_move(self.position + vector):
+            self.position += vector
+            return True
+        else:
+            self.room.try_to_interact(self, self.position + vector)
+        return False
+
+    def interact(self, source):
+        if source.creature_type != self.creature_type:
+            self.stats.take_damage_from(source.stats)
+
 
 class Player(Creature):
     def __init__(self, c, color, pos, room, hp):
@@ -55,6 +72,7 @@ class Player(Creature):
         self.input_type = 0
         self.invController = gameplay.InventoryController(self.inventory)
         self.init_items()
+        self.creature_type = 0
 
     def init_items(self):
         weapon = items.get_item(0,1)
@@ -85,14 +103,21 @@ class Player(Creature):
             elif self.input_type == 1:
                 self.invController.update_event(event)
 
-    def try_to_move(self, vector):
-        if self.room.try_to_move(self.position + vector):
-            self.position += vector
-
     def draw(self, console):
         Object.draw(self, console)
         #20 2
-        console.draw_str(20,2,chr(178)*int(self.hp.get_percent() * 10), fg=(255,0,0))
+        console.draw_str(20,2,chr(178)*int(self.stats.hp.get_percent() * 10), fg=(255,0,0))
 
         self.invController.draw(console, self.input_type == 1)
+
+
+class Enemy(Creature):
+    def __init__(self, c, color, pos, room, hp):
+        Creature.__init__(self,c,color,pos,room,hp)
+        self.dir = logic.Vector(1,0)
+
+    def update_event(self, event):
+        Creature.update_event(self,event)
+        if not self.try_to_move(self.dir):
+            self.dir *= -1
 

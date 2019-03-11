@@ -1,16 +1,18 @@
 import objects, logic, items
 
+
 class Screen:
     def __init__(self, pos):
         self.position = pos
 
+
 class RoomController(Screen):
-    current = None
     def __init__(self, pos, size):
         Screen.__init__(self, pos)
         self.size = size
         self.objects = []
-        RoomController.current = self
+        #self.player = None
+        self.key_pressed = False
 
     def try_to_move(self, pos):
         if pos.x < 0 or pos.x > self.size.x - 1 or pos.y < 0 or pos.y > self.size.y - 1:
@@ -21,6 +23,11 @@ class RoomController(Screen):
                 return False
 
         return True
+
+    def try_to_interact(self, owner, pos):
+        for o in self.objects:
+            if o.position == pos:
+                o.interact(owner)
 
     def try_to_search(self, pos):
         result = []
@@ -35,6 +42,9 @@ class RoomController(Screen):
                 self.objects.remove(obj)
 
     def add_object(self, obj):
+        #if isinstance(obj, objects.Player):
+        #    self.player = obj
+        #    return
         if obj not in self.objects:
             self.objects.append(obj)
 
@@ -42,7 +52,7 @@ class RoomController(Screen):
 
     def draw(self, console):
         for x in range(self.position.x - 1, self.position.x + self.size.x + 1):
-            console.draw_char(x,self.position.y - 1, 178, (128, 128, 128))
+            console.draw_char(x, self.position.y - 1, 178, (128, 128, 128))
             console.draw_char(x, self.position.y + self.size.y, 178, (128, 128, 128))
 
         for y in range(self.position.y - 1, self.position.y + self.size.y + 1):
@@ -50,20 +60,32 @@ class RoomController(Screen):
             console.draw_char(self.position.x + self.size.x, y, 178, (128, 128, 128))
 
         for o in self.objects:
+            #if not isinstance(o, objects.Player):
             o.draw(console)
+        #self.player.draw(console)
 
     def update_event(self, event):
-        for o in self.objects:
-            o.update_event(event)
+        if not self.key_pressed:
+            self.key_pressed = True
+            #self.player.update_event(event)
+            for o in self.objects:
+                o.update_event(event)
+        if event.type != "KEYDOWN":
+            self.key_pressed = False
 
 
 class Equipment:
-    def __init__(self):
+    def __init__(self, stats):
         self.head = None
         self.body = None
         self.weapon = None
         self.pants = None
         self.boots = None
+
+        self.stats = stats
+
+    def get_eq_items(self):
+        return [self.head,self.body,self.weapon, self.pants, self.boots]
 
     def is_equipped(self, item):
         if self.head == item or self.body == item or self.weapon == item or self.pants == item or self.boots == item:
@@ -83,12 +105,30 @@ class Equipment:
         if isinstance(item, items.Boots):
             self.boots = item
 
+        self.stats.resum_stats(self.get_eq_items())
+
+    def try_to_unequip(self, item):
+        if self.head == item:
+            self.head = None
+        if self.body == item:
+            self.body = None
+        if self.weapon == item:
+            self.weapon = None
+        if self.pants == item:
+            self.pants = None
+        if self.boots == item:
+            self.boots = None
+
+        self.stats.resum_stats(self.get_eq_items())
+
+
+
 
 class Inventory:
-    def __init__(self, capacity, controller):
+    def __init__(self, capacity, controller, stats):
         self.capacity = capacity
         self.items = []
-        self.equipment = Equipment()
+        self.equipment = Equipment(stats)
         self.controller = controller
 
     def add_item(self, item):
@@ -104,6 +144,7 @@ class Inventory:
         if pos >= len(self.items) or pos < 0:
             return
         self.controller.drop_item(self.items[pos])
+        self.equipment.try_to_unequip(self.items[pos])
         self.items.remove(self.items[pos])
 
 
@@ -157,3 +198,24 @@ class InventoryController:
         if pos >= len(self.inventory.items) or pos < 0:
             return
         self.cursor = pos
+
+
+class CreatureStats:
+    def __init__(self, hp):
+        self.hp = logic.Stat(hp)
+        self.defence = 0
+        self.damage = 0
+
+    def take_damage_from(self, source):
+        total = source.damage - self.defence
+        if total < 1:
+            total = 1
+        self.hp -= total
+
+    def resum_stats(self, equipment):
+        self.defence = 0
+        self.damage = 0
+        for eq in equipment:
+            if eq is not None:
+                self.damage += eq.damage
+                self.defence += eq.defence
