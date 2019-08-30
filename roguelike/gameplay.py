@@ -65,13 +65,10 @@ class RoomController(Screen):
         #self.player.draw(console)
 
     def update_event(self, event):
-        if not self.key_pressed:
-            self.key_pressed = True
-            #self.player.update_event(event)
-            for o in self.objects:
-                o.update_event(event)
-        if event.type != "KEYDOWN":
-            self.key_pressed = False
+        object_to_update = self.objects.copy()
+        for o in object_to_update:
+            o.update_event(event)
+
 
 
 class Equipment:

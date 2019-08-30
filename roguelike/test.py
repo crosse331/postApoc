@@ -25,6 +25,8 @@ while not tdl.event.is_window_closed():
     for event in tdl.event.get():
         if event.type == "KEYDOWN" and event.key == "ESCAPE":
             exit_game = True
+        if event.type == "MOUSEMOTION":
+            continue
         room.update_event(event)
     room.draw(console)
     #for i in range(300):
