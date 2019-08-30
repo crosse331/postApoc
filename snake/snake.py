@@ -9,7 +9,7 @@ import wann
 import game
 
 SCREEN_SIZE = (32,32)
-LIMIT_FPS = 30
+LIMIT_FPS = 240
 game_over = False
 
 
@@ -33,7 +33,7 @@ def learn():
     global game_over
     snake = game.Snake()
     generation = []
-    generation_size = 20
+    generation_size = 120
     nn_sizes = [16, 4]
     for _ in range(int(generation_size/4)):
         generation.append(wann.NeuralNetwork(nn_sizes, -2))
@@ -76,37 +76,29 @@ def learn():
         generation.sort(key=nn_sort_func,reverse=True)
 
         best = generation[0:10]
-        #best[0].save()
-        #if best_score == best[0].score:
-        #    equal_best += 1
-        #    if equal_best>3:
-        #        best = generation[100:110]
-        #        best_score = 0
-        #        equal_best = 0
-        #else:
-        #    best_score = best[0]
-        #    equal_best = 0
         generation.clear()
         for b in best:
             generation.append(b)
+            b.set_def_weight(-2)
 
-        for _ in range(generation_size):
-            generation.append(best[0].copy())
+        for b in best:
+            generation.append(b.copy())
+            generation[len(generation) - 1].mutate()
+            generation.append(b.copy())
             generation[len(generation) - 1].mutate()
 
+        for i in range(int(generation_size / 4)):
+            cp = generation[i].copy()
+            cp.set_def_weight(-1)
+            generation.append(cp)
+            cp = generation[i].copy()
+            cp.set_def_weight(1)
+            generation.append(cp)
+            cp = generation[i].copy()
+            cp.set_def_weight(2)
+            generation.append(cp)
 
-        #generate new generation by best creature + 8 of they children + 5 mutants of each of them
-        #and 5 new creatures
-        #for _ in range(int(0.4 * generation_size)):
-        #    generation.append(best[0].copy())
-        #    generation[len(generation) - 1].populate(best[1])
-        #for _ in range(int(0.25 * generation_size)):
-        #    generation.append(best[0].copy())
-        #    generation[len(generation) - 1].mutate()
-        #    generation.append(best[1].copy())
-        #    generation[len(generation) - 1].mutate()
-        #for _ in range(int(0.25 * generation_size)):
-        #    generation.append(NeuralNetworks.NeuralNetwork(nn_sizes))
+
 
 def show_results(filename):
     global game_over
