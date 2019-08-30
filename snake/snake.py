@@ -4,7 +4,8 @@ import random as rnd
 import tdl
 import math
 
-import nn as NeuralNetworks
+#import nn as NeuralNetworks
+import wann
 import game
 
 SCREEN_SIZE = (32,32)
@@ -22,17 +23,31 @@ tdl.set_fps(LIMIT_FPS)
 
 count = 0
 
-generation = []
-generation_size = 200
-nn_sizes = [16,8,4]
-snake = game.Snake()
+
+
 #last_best =
 
 #generation[0].mutate()
 
 def learn():
-    for _ in range(generation_size):
-        generation.append(NeuralNetworks.NeuralNetwork(nn_sizes))
+    global game_over
+    snake = game.Snake()
+    generation = []
+    generation_size = 20
+    nn_sizes = [16, 4]
+    for _ in range(int(generation_size/4)):
+        generation.append(wann.NeuralNetwork(nn_sizes, -2))
+
+    for i in range(int(generation_size/4)):
+        cp = generation[i].copy()
+        cp.set_def_weight(-1)
+        generation.append(cp)
+        cp = generation[i].copy()
+        cp.set_def_weight(1)
+        generation.append(cp)
+        cp = generation[i].copy()
+        cp.set_def_weight(2)
+        generation.append(cp)
 
     best_score = 0
     equal_best = 0
@@ -52,7 +67,7 @@ def learn():
                 console.clear()
                 res = creature.input(snake.get_inputs())
                 snake.set_controlls(res)
-                snake.logic()
+                game_over = snake.logic()
                 snake.draw(console)
                 console.draw_char(game.apple_pos[0], game.apple_pos[1], '@', fg=(255,0,0))
                 tdl.flush()
@@ -61,7 +76,7 @@ def learn():
         generation.sort(key=nn_sort_func,reverse=True)
 
         best = generation[0:10]
-        best[0].save()
+        #best[0].save()
         #if best_score == best[0].score:
         #    equal_best += 1
         #    if equal_best>3:
@@ -96,7 +111,7 @@ def learn():
 def show_results(filename):
     global game_over
     snake = game.Snake()
-    network = NeuralNetworks.NeuralNetwork(nn_sizes)
+    network = wann.NeuralNetwork(nn_sizes)
     network.load_from_file(filename)
 
     while not tdl.event.is_window_closed():
@@ -114,4 +129,5 @@ def show_results(filename):
         console.draw_char(game.apple_pos[0], game.apple_pos[1], '@', fg=(255,0,0))
         tdl.flush()
 
-show_results('2058.nn')
+#show_results('2058.nn')
+learn()

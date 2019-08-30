@@ -37,12 +37,13 @@ class Snake:
 
 
     def logic(self):
-        global game_over, apple_pos
+        global apple_pos
+        game_over = False
         self.hunger -= 1
         self.live += 1
         if self.hunger <= 0:
             game_over = True
-            return
+            return game_over
         self.body.insert(0, (self.body[0][0] + self.moving_vector[0], self.body[0][1] + self.moving_vector[1]))
         if self.body[0][0] < 0 or self.body[0][0] > self.SCREEN_SIZE[0]-1 or self.body[0][1] < 0 or self.body[0][1] > self.SCREEN_SIZE[1]-1:
             game_over = True
@@ -55,6 +56,7 @@ class Snake:
         else:
             apple_pos = (rnd.randint(1,self.SCREEN_SIZE[0]-1), rnd.randint(1,self.SCREEN_SIZE[1]-1))
             self.hunger = 500
+        return game_over
 
     def set_controlls(self, controlls):
         vectors = ['w','s','a','d']

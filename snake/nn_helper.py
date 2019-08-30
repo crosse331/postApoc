@@ -14,7 +14,7 @@ def sign(x):
         return -1
 
 def sigmoid(x):
-    return 1/(1 + math.exp(-x))
+    return 1/(1 + math.e ** -x)
 
 def half_line(x):
     if x > 0:
@@ -26,7 +26,10 @@ def line(x):
     return x
 
 def rad_baz(x):
-    return math.exp(math.pow(-x,2))
+    try:
+        return math.exp(-x ** 2)
+    except OverflowError:
+        return 0
 
 def half_line_norm(x):
     if x <= 0:
@@ -43,7 +46,7 @@ def line_norm(x):
     return x
 
 def hyp_tan(x):
-    return (math.exp(x) - math.exp(-x))/(math.exp(x) + math.exp(-x))
+    return (math.e ** x - math.e ** -x)/(math.e ** x + math.e ** -x)
 
 def triangle(x):
     if math.fabs(x) <=1:
